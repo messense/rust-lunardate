@@ -2,7 +2,7 @@ extern crate chrono;
 #[macro_use]
 extern crate lazy_static;
 
-use chrono::NaiveDate;
+use chrono::{Local, NaiveDate, Datelike};
 
 lazy_static! {
     static ref START_DATE: NaiveDate = NaiveDate::from_ymd(1900, 1, 31);
@@ -34,6 +34,11 @@ impl LunarDate {
 
     pub fn to_solar_date(&self) {
 
+    }
+
+    pub fn today() -> Self {
+        let date = Local::today();
+        Self::from_solar_date(date.year(), date.month(), date.day())
     }
 }
 
