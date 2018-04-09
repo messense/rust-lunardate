@@ -6,40 +6,13 @@ use chrono::{Local, NaiveDate, Datelike};
 
 lazy_static! {
     static ref START_DATE: NaiveDate = NaiveDate::from_ymd(1900, 1, 31);
-}
-
-pub struct LunarDate {
-    pub year: i32,
-    pub month: u32,
-    pub day: u32,
-    is_leap_month: bool,
-}
-
-impl LunarDate {
-
-    pub fn new(year: i32, month: u32, day: u32, is_leap_month: bool) -> Self {
-        Self {
-            year,
-            month,
-            day,
-            is_leap_month,
+    static ref YEAR_DAYS: Vec<u32> = {
+        let mut days = Vec::with_capacity(150);
+        for i in 0..150 {
+            days.push(year_info_to_year_day(YEAR_INFOS[i]));
         }
-    }
-
-    pub fn from_solar_date(year: i32, month: u32, day: u32) -> Self {
-        let solar_date = NaiveDate::from_ymd(year, month, day);
-        let offset = solar_date.signed_duration_since(*START_DATE).num_days();
-        unimplemented!()
-    }
-
-    pub fn to_solar_date(&self) {
-
-    }
-
-    pub fn today() -> Self {
-        let date = Local::today();
-        Self::from_solar_date(date.year(), date.month(), date.day())
-    }
+        days
+    };
 }
 
 const YEAR_INFOS: [u32; 150] = [
@@ -87,6 +60,77 @@ const YEAR_INFOS: [u32; 150] = [
     0x056d0, 0x055b2, 0x049b0, 0x0a577, 0x0a4b0,   /* 2045 */
     0x0aa50, 0x1b255, 0x06d20, 0x0ada0             /* 2049 */
 ];
+
+fn year_info_to_year_day(year_info: u32) -> u32 {
+    let mut res: u32 = 29 * 12;
+    let mut leap = false;
+    if year_info % 16 != 0 {
+        leap = true;
+        res += 29;
+    }
+    let mut year_info = year_info / 16;
+    let inc = if leap { 1 } else { 0 };
+    for _ in 0..(12 + inc) {
+        if year_info % 2 == 1 {
+            res += 1;
+        }
+        year_info = year_info / 2;
+    }
+    res
+}
+
+fn enum_month(year: u32) -> Vec<(u32, u32, bool)> {
+    unimplemented!()
+}
+
+fn calc_month_day(year: u32, offset: u32) -> (u32, u32, bool) {
+    let mut offset = offset;
+    for (month, days, is_leap_month) in enum_month(year).into_iter() {
+        if offset < days {
+            break;
+        }
+        offset -= days;
+    }
+    unimplemented!()
+}
+
+pub struct LunarDate {
+    pub year: i32,
+    pub month: u32,
+    pub day: u32,
+    pub is_leap_month: bool,
+}
+
+impl LunarDate {
+
+    pub fn new(year: i32, month: u32, day: u32, is_leap_month: bool) -> Self {
+        Self {
+            year,
+            month,
+            day,
+            is_leap_month,
+        }
+    }
+
+    pub fn from_solar_date(year: i32, month: u32, day: u32) -> Self {
+        let solar_date = NaiveDate::from_ymd(year, month, day);
+        let offset = solar_date.signed_duration_since(*START_DATE).num_days();
+        Self::from_offset(offset as u32)
+    }
+
+    pub fn to_solar_date(&self) {
+
+    }
+
+    pub fn today() -> Self {
+        let date = Local::today();
+        Self::from_solar_date(date.year(), date.month(), date.day())
+    }
+
+    fn from_offset(offset: u32) -> Self {
+        unimplemented!()
+    }
+}
 
 #[cfg(test)]
 mod tests {
