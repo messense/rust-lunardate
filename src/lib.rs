@@ -80,18 +80,40 @@ fn year_info_to_year_day(year_info: u32) -> u32 {
 }
 
 fn enum_month(year: u32) -> Vec<(u32, u32, bool)> {
-    unimplemented!()
+    let mut months: Vec<(u32, bool)> = (1..13).map(|x| (x, false)).collect();
+    let leap_month = year % 16;
+    if leap_month == 0 {
+
+    } else if leap_month <= 12 {
+        months.insert(leap_month as usize, (leap_month, true));
+    } else {
+        // FIXME: return error
+    }
+    let mut ret = Vec::with_capacity(months.len());
+    for (month, is_leap_month) in months {
+        let days = if is_leap_month {
+            (year >> 16) % 2 + 29
+        } else {
+            (year >> (16 - month)) % 2 + 29
+        };
+        ret.push((month, days, is_leap_month));
+    }
+    ret
 }
 
 fn calc_month_day(year: u32, offset: u32) -> (u32, u32, bool) {
+    let mut month = 0;
+    let mut is_leap_month = false;
     let mut offset = offset;
-    for (month, days, is_leap_month) in enum_month(year).into_iter() {
+    for (month_, days, leap_month) in enum_month(year).into_iter() {
+        month = month_;
+        is_leap_month = leap_month;
         if offset < days {
             break;
         }
         offset -= days;
     }
-    unimplemented!()
+    (month, offset + 1, is_leap_month)
 }
 
 pub struct LunarDate {
@@ -128,7 +150,24 @@ impl LunarDate {
     }
 
     fn from_offset(offset: u32) -> Self {
-        unimplemented!()
+        let mut offset = offset;
+        let mut index = 0;
+        for (idx, year_day) in YEAR_DAYS.iter().enumerate() {
+            index = idx;
+            if offset < *year_day {
+                break;
+            }
+            offset -= *year_day;
+        }
+        let year = 1900 + index;
+        let year_info = YEAR_INFOS[index];
+        let (month, day, is_leap_month) = calc_month_day(year_info, offset);
+        LunarDate {
+            year: year as i32,
+            month,
+            day,
+            is_leap_month,
+        }
     }
 }
 
