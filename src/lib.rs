@@ -116,6 +116,7 @@ fn calc_month_day(year: u32, offset: u32) -> (u32, u32, bool) {
     (month, offset + 1, is_leap_month)
 }
 
+#[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LunarDate {
     pub year: i32,
     pub month: u32,
