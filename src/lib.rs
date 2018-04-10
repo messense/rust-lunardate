@@ -125,6 +125,7 @@ pub struct LunarDate {
 
 impl LunarDate {
 
+    #[inline]
     pub fn new(year: i32, month: u32, day: u32, is_leap_month: bool) -> Self {
         Self {
             year,
@@ -136,7 +137,12 @@ impl LunarDate {
 
     pub fn from_solar_date(year: i32, month: u32, day: u32) -> Self {
         let solar_date = NaiveDate::from_ymd(year, month, day);
-        let offset = solar_date.signed_duration_since(*START_DATE).num_days();
+        Self::from_naive_date(&solar_date)
+    }
+
+    #[inline]
+    pub fn from_naive_date(date: &NaiveDate) -> Self {
+        let offset = date.signed_duration_since(*START_DATE).num_days();
         Self::from_offset(offset as u32)
     }
 
@@ -144,6 +150,7 @@ impl LunarDate {
 
     }
 
+    #[inline]
     pub fn today() -> Self {
         let date = Local::today();
         Self::from_solar_date(date.year(), date.month(), date.day())
