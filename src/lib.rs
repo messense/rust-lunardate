@@ -2,7 +2,8 @@ extern crate chrono;
 #[macro_use]
 extern crate lazy_static;
 
-use std::ops::{Add};
+use std::time;
+use std::ops::{Add, Sub};
 use chrono::{Local, NaiveDate, Datelike, Duration};
 
 lazy_static! {
@@ -215,12 +216,49 @@ impl Add<Duration> for LunarDate {
     }
 }
 
-impl Add<::std::time::Duration> for LunarDate {
+impl Add<time::Duration> for LunarDate {
     type Output = LunarDate;
 
     #[inline]
-    fn add(self, rhs: ::std::time::Duration) -> Self::Output {
+    fn add(self, rhs: time::Duration) -> Self::Output {
         self + Duration::from_std(rhs).unwrap()
+    }
+}
+
+impl Sub<Duration> for LunarDate {
+    type Output = LunarDate;
+
+    #[inline]
+    fn sub(self, rhs: Duration) -> Self::Output {
+        let date = self.to_solar_date() - rhs;
+        LunarDate::from_naive_date(&date)
+    }
+}
+
+impl Sub<time::Duration> for LunarDate {
+    type Output = LunarDate;
+
+    #[inline]
+    fn sub(self, rhs: time::Duration) -> Self::Output {
+        self + Duration::from_std(rhs).unwrap()
+    }
+}
+
+impl Sub<LunarDate> for LunarDate {
+    type Output = Duration;
+
+    #[inline]
+    fn sub(self, rhs: LunarDate) -> Self::Output {
+        self.to_solar_date() - rhs.to_solar_date()
+    }
+}
+
+impl Sub<NaiveDate> for LunarDate {
+    type Output = Duration;
+
+    #[inline]
+    fn sub(self, rhs: NaiveDate) -> Self::Output {
+        self.to_solar_date() - rhs
     }
 }
 
