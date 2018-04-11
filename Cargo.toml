@@ -2,6 +2,11 @@
 name = "lunardate"
 version = "0.1.0"
 authors = ["messense <messense@icloud.com>"]
+description = "A Chinese Calendar Library in Rust"
+keywords = ["chinese", "calendar", "lunar"]
+license = "MIT"
+readme = "README.md"
+repository = "https://github.com/messense/rust-lunardate"
 
 [dependencies]
 chrono = "0.4"
