@@ -284,8 +284,15 @@ impl Sub<NaiveDate> for LunarDate {
 
 #[cfg(test)]
 mod tests {
+    use super::LunarDate;
+
     #[test]
-    fn it_works() {
-        assert_eq!(2 + 2, 4);
+    fn test_from_solar_date() {
+        let date = LunarDate::from_solar_date(1976, 10, 1);
+        assert_eq!(date, LunarDate::new(1976, 8, 8, true));
+        assert_eq!(date.year(), 1976);
+        assert_eq!(date.month(), 8);
+        assert_eq!(date.day(), 8);
+        assert!(date.is_leap_month());
     }
 }
