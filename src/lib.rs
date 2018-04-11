@@ -2,6 +2,7 @@ extern crate chrono;
 #[macro_use]
 extern crate lazy_static;
 
+use std::ops::{Add};
 use chrono::{Local, NaiveDate, Datelike, Duration};
 
 lazy_static! {
@@ -201,6 +202,25 @@ impl LunarDate {
             day,
             is_leap_month,
         }
+    }
+}
+
+impl Add<Duration> for LunarDate {
+    type Output = LunarDate;
+
+    #[inline]
+    fn add(self, rhs: Duration) -> Self::Output {
+        let date = self.to_solar_date() + rhs;
+        LunarDate::from_naive_date(&date)
+    }
+}
+
+impl Add<::std::time::Duration> for LunarDate {
+    type Output = LunarDate;
+
+    #[inline]
+    fn add(self, rhs: ::std::time::Duration) -> Self::Output {
+        self + Duration::from_std(rhs).unwrap()
     }
 }
 
