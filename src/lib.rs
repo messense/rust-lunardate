@@ -22,7 +22,7 @@ extern crate chrono;
 #[macro_use]
 extern crate lazy_static;
 
-use std::time;
+use std::{error, fmt, time};
 use std::ops::{Add, Sub};
 use chrono::{Local, NaiveDate, Datelike, Duration};
 
@@ -83,6 +83,33 @@ const YEAR_INFOS: [u32; 150] = [
     0x0aa50, 0x1b255, 0x06d20, 0x0ada0             /* 2049 */
 ];
 
+#[derive(Debug, Clone, PartialEq)]
+pub enum Error {
+    YearOutOfRange,
+    MonthOutOfRange,
+    DayOutOfRange,
+}
+
+impl fmt::Display for Error {
+    fn fmt(&self, f: &mut fmt::Formatter) -> Result<(), fmt::Error> {
+        match *self {
+            Error::YearOutOfRange => write!(f, "year out of range"),
+            Error::MonthOutOfRange => write!(f, "month out of range"),
+            Error::DayOutOfRange => write!(f, "day out of range"),
+        }
+    }
+}
+
+impl error::Error for Error {
+    fn description(&self) -> &str {
+        match *self {
+            Error::YearOutOfRange => "year out of range",
+            Error::MonthOutOfRange => "month out of range",
+            Error::DayOutOfRange => "day out of range",
+        }
+    }
+}
+
 fn year_info_to_year_day(year_info: u32) -> u32 {
     let mut res: u32 = 29 * 12;
     let mut leap = false;
@@ -101,7 +128,7 @@ fn year_info_to_year_day(year_info: u32) -> u32 {
     res
 }
 
-fn enum_month(year: u32) -> Vec<(u32, u32, bool)> {
+fn enum_month(year: u32) -> Result<Vec<(u32, u32, bool)>, Error> {
     let mut months: Vec<(u32, bool)> = (1..13).map(|x| (x, false)).collect();
     let leap_month = year % 16;
     if leap_month == 0 {
@@ -109,7 +136,7 @@ fn enum_month(year: u32) -> Vec<(u32, u32, bool)> {
     } else if leap_month <= 12 {
         months.insert(leap_month as usize, (leap_month, true));
     } else {
-        // FIXME: return error
+        return Err(Error::YearOutOfRange);
     }
     let mut ret = Vec::with_capacity(months.len());
     for (month, is_leap_month) in months {
@@ -120,14 +147,14 @@ fn enum_month(year: u32) -> Vec<(u32, u32, bool)> {
         };
         ret.push((month, days, is_leap_month));
     }
-    ret
+    Ok(ret)
 }
 
-fn calc_month_day(year: u32, offset: u32) -> (u32, u32, bool) {
+fn calc_month_day(year: u32, offset: u32) -> Result<(u32, u32, bool), Error> {
     let mut month = 0;
     let mut is_leap_month = false;
     let mut offset = offset;
-    for (month_, days, leap_month) in enum_month(year).into_iter() {
+    for (month_, days, leap_month) in enum_month(year)?.into_iter() {
         month = month_;
         is_leap_month = leap_month;
         if offset < days {
@@ -135,23 +162,23 @@ fn calc_month_day(year: u32, offset: u32) -> (u32, u32, bool) {
         }
         offset -= days;
     }
-    (month, offset + 1, is_leap_month)
+    Ok((month, offset + 1, is_leap_month))
 }
 
-fn calc_days(year_info: u32, month: u32, day: u32, is_leap_month: bool) -> u32 {
+fn calc_days(year_info: u32, month: u32, day: u32, is_leap_month: bool) -> Result<u32, Error> {
     let mut res = 0;
-    for (_month, _days, leap_month) in enum_month(year_info) {
+    for (_month, _days, leap_month) in enum_month(year_info)? {
         if _month == month && is_leap_month == leap_month {
             if day >= 1 && day <= _days {
                 res += day - 1;
-                return res;
+                return Ok(res);
             } else {
-                // FIXME: handle error day out of range
+                return Err(Error::DayOutOfRange);
             }
         }
         res += _days;
     }
-    res
+    Err(Error::MonthOutOfRange)
 }
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
@@ -174,13 +201,13 @@ impl LunarDate {
         }
     }
 
-    pub fn from_solar_date(year: i32, month: u32, day: u32) -> Self {
+    pub fn from_solar_date(year: i32, month: u32, day: u32) -> Result<Self, Error> {
         let solar_date = NaiveDate::from_ymd(year, month, day);
         Self::from_naive_date(&solar_date)
     }
 
     #[inline]
-    pub fn from_naive_date(date: &NaiveDate) -> Self {
+    pub fn from_naive_date(date: &NaiveDate) -> Result<Self, Error> {
         let offset = date.signed_duration_since(*START_DATE).num_days();
         Self::from_offset(offset as u32)
     }
@@ -205,26 +232,26 @@ impl LunarDate {
         self.is_leap_month
     }
 
-    pub fn to_solar_date(&self) -> NaiveDate {
+    pub fn to_solar_date(&self) -> Result<NaiveDate, Error> {
         let mut offset = 0;
         if self.year < 1900 || self.year >= 2050 {
-            // FIXME: handle error
+            return Err(Error::YearOutOfRange);
         }
         let year_index = self.year as usize - 1900;
         for i in 0..year_index {
             offset += YEAR_DAYS[i];
         }
-        offset += calc_days(YEAR_INFOS[year_index], self.month, self.day, self.is_leap_month);
-        *START_DATE + Duration::days(offset as i64)
+        offset += calc_days(YEAR_INFOS[year_index], self.month, self.day, self.is_leap_month)?;
+        Ok(*START_DATE + Duration::days(offset as i64))
     }
 
     #[inline]
-    pub fn today() -> Self {
+    pub fn today() -> Result<Self, Error> {
         let date = Local::today();
         Self::from_solar_date(date.year(), date.month(), date.day())
     }
 
-    fn from_offset(offset: u32) -> Self {
+    fn from_offset(offset: u32) -> Result<Self, Error> {
         let mut offset = offset;
         let mut index = 0;
         for (idx, year_day) in YEAR_DAYS.iter().enumerate() {
@@ -236,13 +263,13 @@ impl LunarDate {
         }
         let year = 1900 + index;
         let year_info = YEAR_INFOS[index];
-        let (month, day, is_leap_month) = calc_month_day(year_info, offset);
-        LunarDate {
+        let (month, day, is_leap_month) = calc_month_day(year_info, offset)?;
+        Ok(LunarDate {
             year: year as i32,
             month,
             day,
             is_leap_month,
-        }
+        })
     }
 }
 
@@ -251,8 +278,8 @@ impl Add<Duration> for LunarDate {
 
     #[inline]
     fn add(self, rhs: Duration) -> Self::Output {
-        let date = self.to_solar_date() + rhs;
-        LunarDate::from_naive_date(&date)
+        let date = self.to_solar_date().unwrap() + rhs;
+        LunarDate::from_naive_date(&date).unwrap()
     }
 }
 
@@ -270,8 +297,8 @@ impl Sub<Duration> for LunarDate {
 
     #[inline]
     fn sub(self, rhs: Duration) -> Self::Output {
-        let date = self.to_solar_date() - rhs;
-        LunarDate::from_naive_date(&date)
+        let date = self.to_solar_date().unwrap() - rhs;
+        LunarDate::from_naive_date(&date).unwrap()
     }
 }
 
@@ -289,7 +316,7 @@ impl Sub<LunarDate> for LunarDate {
 
     #[inline]
     fn sub(self, rhs: LunarDate) -> Self::Output {
-        self.to_solar_date() - rhs.to_solar_date()
+        self.to_solar_date().unwrap() - rhs.to_solar_date().unwrap()
     }
 }
 
@@ -298,7 +325,7 @@ impl Sub<NaiveDate> for LunarDate {
 
     #[inline]
     fn sub(self, rhs: NaiveDate) -> Self::Output {
-        self.to_solar_date() - rhs
+        self.to_solar_date().unwrap() - rhs
     }
 }
 
@@ -309,7 +336,7 @@ mod tests {
 
     #[test]
     fn test_from_solar_date() {
-        let date = LunarDate::from_solar_date(1976, 10, 1);
+        let date = LunarDate::from_solar_date(1976, 10, 1).unwrap();
         assert_eq!(date, LunarDate::new(1976, 8, 8, true));
         assert_eq!(date.year(), 1976);
         assert_eq!(date.month(), 8);
@@ -320,7 +347,7 @@ mod tests {
     #[test]
     fn test_to_solar_date() {
         let ld = LunarDate::new(1976, 8, 8, true);
-        let sd = ld.to_solar_date();
+        let sd = ld.to_solar_date().unwrap();
         assert_eq!(sd.year(), 1976);
         assert_eq!(sd.month(), 10);
         assert_eq!(sd.day(), 1);
