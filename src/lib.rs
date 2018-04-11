@@ -212,7 +212,7 @@ impl LunarDate {
         }
         let year_index = self.year as usize - 1900;
         for i in 0..year_index {
-            offset += YEAR_INFOS[i];
+            offset += YEAR_DAYS[i];
         }
         offset += calc_days(YEAR_INFOS[year_index], self.month, self.day, self.is_leap_month);
         *START_DATE + Duration::days(offset as i64)
@@ -304,6 +304,7 @@ impl Sub<NaiveDate> for LunarDate {
 
 #[cfg(test)]
 mod tests {
+    use chrono::prelude::*;
     use super::LunarDate;
 
     #[test]
@@ -314,5 +315,14 @@ mod tests {
         assert_eq!(date.month(), 8);
         assert_eq!(date.day(), 8);
         assert!(date.is_leap_month());
+    }
+
+    #[test]
+    fn test_to_solar_date() {
+        let ld = LunarDate::new(1976, 8, 8, true);
+        let sd = ld.to_solar_date();
+        assert_eq!(sd.year(), 1976);
+        assert_eq!(sd.month(), 10);
+        assert_eq!(sd.day(), 1);
     }
 }
