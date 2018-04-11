@@ -133,7 +133,7 @@ fn calc_days(year_info: u32, month: u32, day: u32, is_leap_month: bool) -> u32 {
     res
 }
 
-#[derive(Debug, Clone, PartialEq, Eq, Hash)]
+#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct LunarDate {
     pub year: i32,
     pub month: u32,
