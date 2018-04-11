@@ -136,10 +136,10 @@ fn calc_days(year_info: u32, month: u32, day: u32, is_leap_month: bool) -> u32 {
 
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct LunarDate {
-    pub year: i32,
-    pub month: u32,
-    pub day: u32,
-    pub is_leap_month: bool,
+    year: i32,
+    month: u32,
+    day: u32,
+    is_leap_month: bool,
 }
 
 impl LunarDate {
@@ -163,6 +163,26 @@ impl LunarDate {
     pub fn from_naive_date(date: &NaiveDate) -> Self {
         let offset = date.signed_duration_since(*START_DATE).num_days();
         Self::from_offset(offset as u32)
+    }
+
+    #[inline]
+    pub fn year(&self) -> i32 {
+        self.year
+    }
+
+    #[inline]
+    pub fn month(&self) -> u32 {
+        self.month
+    }
+
+    #[inline]
+    pub fn day(&self) -> u32 {
+        self.day
+    }
+
+    #[inline]
+    pub fn is_leap_month(&self) -> bool {
+        self.is_leap_month
     }
 
     pub fn to_solar_date(&self) -> NaiveDate {
