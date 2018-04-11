@@ -2,7 +2,7 @@ extern crate chrono;
 #[macro_use]
 extern crate lazy_static;
 
-use chrono::{Local, NaiveDate, Datelike};
+use chrono::{Local, NaiveDate, Datelike, Duration};
 
 lazy_static! {
     static ref START_DATE: NaiveDate = NaiveDate::from_ymd(1900, 1, 31);
@@ -116,6 +116,22 @@ fn calc_month_day(year: u32, offset: u32) -> (u32, u32, bool) {
     (month, offset + 1, is_leap_month)
 }
 
+fn calc_days(year_info: u32, month: u32, day: u32, is_leap_month: bool) -> u32 {
+    let mut res = 0;
+    for (_month, _days, leap_month) in enum_month(year_info) {
+        if _month == month && is_leap_month == leap_month {
+            if day >= 1 && day <= _days {
+                res += day - 1;
+                return res;
+            } else {
+                // FIXME: handle error day out of range
+            }
+        }
+        res += _days;
+    }
+    res
+}
+
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct LunarDate {
     pub year: i32,
@@ -147,8 +163,17 @@ impl LunarDate {
         Self::from_offset(offset as u32)
     }
 
-    pub fn to_solar_date(&self) {
-
+    pub fn to_solar_date(&self) -> NaiveDate {
+        let mut offset = 0;
+        if self.year < 1900 || self.year >= 2050 {
+            // FIXME: handle error
+        }
+        let year_index = self.year as usize - 1900;
+        for i in 0..year_index {
+            offset += YEAR_INFOS[i];
+        }
+        offset += calc_days(YEAR_INFOS[year_index], self.month, self.day, self.is_leap_month);
+        *START_DATE + Duration::days(offset as i64)
     }
 
     #[inline]
