@@ -83,10 +83,14 @@ const YEAR_INFOS: [u32; 150] = [
     0x0aa50, 0x1b255, 0x06d20, 0x0ada0             /* 2049 */
 ];
 
+/// `LunarDate` related errors
 #[derive(Debug, Clone, PartialEq)]
 pub enum Error {
+    /// Year out of range
     YearOutOfRange,
+    /// Month out of range
     MonthOutOfRange,
+    /// Day out of range
     DayOutOfRange,
 }
 
@@ -181,6 +185,7 @@ fn calc_days(year_info: u32, month: u32, day: u32, is_leap_month: bool) -> Resul
     Err(Error::MonthOutOfRange)
 }
 
+/// Represents a lunar date
 #[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
 pub struct LunarDate {
     year: i32,
@@ -191,6 +196,7 @@ pub struct LunarDate {
 
 impl LunarDate {
 
+    /// Construct a new `LunarDate` struct
     #[inline]
     pub fn new(year: i32, month: u32, day: u32, is_leap_month: bool) -> Self {
         Self {
@@ -201,37 +207,44 @@ impl LunarDate {
         }
     }
 
+    /// Construct a new `LunarDate` from solar date
     pub fn from_solar_date(year: i32, month: u32, day: u32) -> Result<Self, Error> {
         let solar_date = NaiveDate::from_ymd(year, month, day);
         Self::from_naive_date(&solar_date)
     }
 
+    /// Construct a new `LunarDate` from `chrono`'s `NaiveDate`
     #[inline]
     pub fn from_naive_date(date: &NaiveDate) -> Result<Self, Error> {
         let offset = date.signed_duration_since(*START_DATE).num_days();
         Self::from_offset(offset as u32)
     }
 
+    /// Return lunar year
     #[inline]
     pub fn year(&self) -> i32 {
         self.year
     }
 
+    /// Return lunar month
     #[inline]
     pub fn month(&self) -> u32 {
         self.month
     }
 
+    /// Return lunar day
     #[inline]
     pub fn day(&self) -> u32 {
         self.day
     }
 
+    /// Is leap month?
     #[inline]
     pub fn is_leap_month(&self) -> bool {
         self.is_leap_month
     }
 
+    /// Convert `LunarDate` to solar date
     pub fn to_solar_date(&self) -> Result<NaiveDate, Error> {
         let mut offset = 0;
         if self.year < 1900 || self.year >= 2050 {
@@ -245,6 +258,7 @@ impl LunarDate {
         Ok(*START_DATE + Duration::days(offset as i64))
     }
 
+    /// Return lunar date of solar date of today
     #[inline]
     pub fn today() -> Result<Self, Error> {
         let date = Local::today();
