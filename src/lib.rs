@@ -375,4 +375,31 @@ mod tests {
         assert_eq!(sd.month(), 10);
         assert_eq!(sd.day(), 1);
     }
+
+    #[test]
+    fn test_before_leap_month() {
+        let ld = LunarDate::from_solar_date(2017, 6, 28).unwrap();
+        assert_eq!(ld.year(), 2017);
+        assert_eq!(ld.month(), 6);
+        assert_eq!(ld.day(), 5);
+        assert_eq!(ld.is_leap_month(), false);
+    }
+
+    #[test]
+    fn test_leap_month() {
+        let ld = LunarDate::from_solar_date(2017, 7, 28).unwrap();
+        assert_eq!(ld.year(), 2017);
+        assert_eq!(ld.month(), 6);
+        assert_eq!(ld.day(), 6);
+        assert_eq!(ld.is_leap_month(), true);
+    }
+
+    #[test]
+    fn test_after_leap_month() {
+        let ld = LunarDate::from_solar_date(2017, 8, 28).unwrap();
+        assert_eq!(ld.year(), 2017);
+        assert_eq!(ld.month(), 7);
+        assert_eq!(ld.day(), 7);
+        assert_eq!(ld.is_leap_month(), false);
+    }
 }
