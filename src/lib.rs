@@ -37,7 +37,7 @@ lazy_static! {
     };
 }
 
-const YEAR_INFOS: [u32; 150] = [
+const YEAR_INFOS: [u32; 196] = [
     /* encoding:
                 b bbbbbbbbbbbb bbbb
         bit#    1 111111000000 0000
@@ -80,7 +80,16 @@ const YEAR_INFOS: [u32; 150] = [
     0x076a3, 0x096d0, 0x04afb, 0x04ad0, 0x0a4d0,   /* 2035 */
     0x1d0b6, 0x0d250, 0x0d520, 0x0dd45, 0x0b5a0,   /* 2040 */
     0x056d0, 0x055b2, 0x049b0, 0x0a577, 0x0a4b0,   /* 2045 */
-    0x0aa50, 0x1b255, 0x06d20, 0x0ada0             /* 2049 */
+    0x0aa50, 0x1b255, 0x06d20, 0x0ada0, 0x14b63,   /* 2050 */
+    0x09370, 0x049f8, 0x04970, 0x064b0, 0x168a6,   /* 2055 */
+    0x0ea50, 0x06aa0, 0x1a6c4, 0x0aae0, 0x092e0,   /* 2060 */
+    0x0d2e3, 0x0c960, 0x0d557, 0x0d4a0, 0x0da50,   /* 2065 */
+    0x05d55, 0x056a0, 0x0a6d0, 0x055d4, 0x052d0,   /* 2070 */
+    0x0a9b8, 0x0a950, 0x0b4a0, 0x0b6a6, 0x0ad50,   /* 2075 */
+    0x055a0, 0x0aba4, 0x0a5b0, 0x052b0, 0x0b273,   /* 2080 */
+    0x06930, 0x07337, 0x06aa0, 0x0ad50, 0x14b55,   /* 2085 */
+    0x04b60, 0x0a570, 0x054e4, 0x0d160, 0x0e968,   /* 2090 */
+    0x0d520, 0x0daa0, 0x16aa6, 0x056d0, 0x04ae0    /* 2095 */
 ];
 
 /// `LunarDate` related errors
@@ -365,5 +374,32 @@ mod tests {
         assert_eq!(sd.year(), 1976);
         assert_eq!(sd.month(), 10);
         assert_eq!(sd.day(), 1);
+    }
+
+    #[test]
+    fn test_before_leap_month() {
+        let ld = LunarDate::from_solar_date(2017, 6, 28).unwrap();
+        assert_eq!(ld.year(), 2017);
+        assert_eq!(ld.month(), 6);
+        assert_eq!(ld.day(), 5);
+        assert_eq!(ld.is_leap_month(), false);
+    }
+
+    #[test]
+    fn test_leap_month() {
+        let ld = LunarDate::from_solar_date(2017, 7, 28).unwrap();
+        assert_eq!(ld.year(), 2017);
+        assert_eq!(ld.month(), 6);
+        assert_eq!(ld.day(), 6);
+        assert_eq!(ld.is_leap_month(), true);
+    }
+
+    #[test]
+    fn test_after_leap_month() {
+        let ld = LunarDate::from_solar_date(2017, 8, 28).unwrap();
+        assert_eq!(ld.year(), 2017);
+        assert_eq!(ld.month(), 7);
+        assert_eq!(ld.day(), 7);
+        assert_eq!(ld.is_leap_month(), false);
     }
 }
