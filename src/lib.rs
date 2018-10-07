@@ -30,14 +30,14 @@ lazy_static! {
     static ref START_DATE: NaiveDate = NaiveDate::from_ymd(1900, 1, 31);
     static ref YEAR_DAYS: Vec<u32> = {
         let mut days = Vec::with_capacity(150);
-        for i in 0..150 {
+        for i in 0..YEAR_INFOS.len() {
             days.push(year_info_to_year_day(YEAR_INFOS[i]));
         }
         days
     };
 }
 
-const YEAR_INFOS: [u32; 196] = [
+const YEAR_INFOS: [u32; 200] = [
     /* encoding:
                 b bbbbbbbbbbbb bbbb
         bit#    1 111111000000 0000
@@ -89,7 +89,8 @@ const YEAR_INFOS: [u32; 196] = [
     0x055a0, 0x0aba4, 0x0a5b0, 0x052b0, 0x0b273,   /* 2080 */
     0x06930, 0x07337, 0x06aa0, 0x0ad50, 0x14b55,   /* 2085 */
     0x04b60, 0x0a570, 0x054e4, 0x0d160, 0x0e968,   /* 2090 */
-    0x0d520, 0x0daa0, 0x16aa6, 0x056d0, 0x04ae0    /* 2095 */
+    0x0d520, 0x0daa0, 0x16aa6, 0x056d0, 0x04ae0,   /* 2095 */
+    0x0a9d4, 0x0a2d0, 0x0d150, 0x0f252             /* 2099 */
 ];
 
 /// `LunarDate` related errors
@@ -256,7 +257,7 @@ impl LunarDate {
     /// Convert `LunarDate` to solar date
     pub fn to_solar_date(&self) -> Result<NaiveDate, Error> {
         let mut offset = 0;
-        if self.year < 1900 || self.year >= 2050 {
+        if self.year < 1900 || self.year >= 1900 + YEAR_INFOS.len() as i32 {
             return Err(Error::YearOutOfRange);
         }
         let year_index = self.year as usize - 1900;
@@ -355,7 +356,7 @@ impl Sub<NaiveDate> for LunarDate {
 #[cfg(test)]
 mod tests {
     use chrono::prelude::*;
-    use super::LunarDate;
+    use super::*;
 
     #[test]
     fn test_from_solar_date() {
@@ -401,5 +402,26 @@ mod tests {
         assert_eq!(ld.month(), 7);
         assert_eq!(ld.day(), 7);
         assert_eq!(ld.is_leap_month(), false);
+    }
+
+    #[test]
+    fn test_year_out_of_range() {
+        let ld = LunarDate::new(2100, 1, 1, false);
+        let sd = ld.to_solar_date();
+        assert_eq!(sd, Err(Error::YearOutOfRange));
+    }
+
+    #[test]
+    fn test_month_out_of_range() {
+        let ld = LunarDate::new(2004, 13, 1, false);
+        let sd = ld.to_solar_date();
+        assert_eq!(sd, Err(Error::MonthOutOfRange));
+    }
+
+    #[test]
+    fn test_day_out_of_range() {
+        let ld = LunarDate::new(2004, 1, 30, false);
+        let sd = ld.to_solar_date();
+        assert_eq!(sd, Err(Error::DayOutOfRange));
     }
 }
