@@ -295,6 +295,34 @@ impl LunarDate {
             is_leap_month,
         })
     }
+
+    /// Adds some duration to the current lunar date
+    ///
+    /// Returns `None` when it will result in overflow.
+    pub fn checked_add(self, rhs: time::Duration) -> Option<LunarDate> {
+        if let Ok(rhs) = Duration::from_std(rhs) {
+            if let Ok(date) = self.to_solar_date() {
+                return date
+                    .checked_add_signed(rhs)
+                    .and_then(|ref dt| LunarDate::from_naive_date(dt).ok());
+            }
+        }
+        None
+    }
+
+    /// Subtracts some duration to the current lunar date
+    ///
+    /// Returns `None` when it will result in overflow.
+    pub fn checked_sub(self, rhs: time::Duration) -> Option<LunarDate> {
+        if let Ok(rhs) = Duration::from_std(rhs) {
+            if let Ok(date) = self.to_solar_date() {
+                return date
+                    .checked_sub_signed(rhs)
+                    .and_then(|ref dt| LunarDate::from_naive_date(dt).ok());
+            }
+        }
+        None
+    }
 }
 
 impl Add<Duration> for LunarDate {
