@@ -17,7 +17,7 @@ Add it to your ``Cargo.toml``:
 
 ```toml
 [dependencies]
-lunardate = "0.1"
+lunardate = "0.2"
 ```
 
 Add ``extern crate lunardate`` to your crate root if you are using Rust 2015 edition and your're good to go!

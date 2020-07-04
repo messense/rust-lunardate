@@ -1,6 +1,6 @@
 [package]
 name = "lunardate"
-version = "0.1.4"
+version = "0.2.0"
 authors = ["messense <messense@icloud.com>"]
 description = "A Chinese Calendar Library in Rust"
 edition = "2018"
