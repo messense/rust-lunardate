@@ -1,6 +1,6 @@
 # rust-lunardate
 
-[![Build Status](https://travis-ci.org/messense/rust-lunardate.svg)](https://travis-ci.org/messense/rust-lunardate)
+[![GitHub Actions](https://github.com/messense/rust-lunardate/workflows/CI/badge.svg)](https://github.com/messense/rust-lunardate/actions?query=workflow%3ACI)
 [![Crates.io](https://img.shields.io/crates/v/lunardate.svg)](https://crates.io/crates/lunardate)
 [![codecov](https://codecov.io/gh/messense/rust-lunardate/branch/master/graph/badge.svg)](https://codecov.io/gh/messense/rust-lunardate)
 [![docs.rs](https://docs.rs/lunardate/badge.svg)](https://docs.rs/lunardate/)
@@ -20,7 +20,7 @@ Add it to your ``Cargo.toml``:
 lunardate = "0.1"
 ```
 
-Add ``extern crate lunardate`` to your crate root and your're good to go!
+Add ``extern crate lunardate`` to your crate root if you are using Rust 2015 edition and your're good to go!
 
 ## License
 
