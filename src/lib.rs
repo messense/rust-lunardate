@@ -24,11 +24,11 @@ use std::ops::{Add, Sub};
 use std::{error, fmt, time};
 
 lazy_static! {
-    static ref START_DATE: NaiveDate = NaiveDate::from_ymd(1900, 1, 31);
+    static ref START_DATE: NaiveDate = NaiveDate::from_ymd_opt(1900, 1, 31).unwrap();
     static ref YEAR_DAYS: Vec<u32> = {
         let mut days = Vec::with_capacity(150);
-        for i in 0..YEAR_INFOS.len() {
-            days.push(year_info_to_year_day(YEAR_INFOS[i]));
+        for year_info in &YEAR_INFOS {
+            days.push(year_info_to_year_day(*year_info));
         }
         days
     };
@@ -91,7 +91,7 @@ const YEAR_INFOS: [u32; 200] = [
 ];
 
 /// `LunarDate` related errors
-#[derive(Debug, Clone, PartialEq)]
+#[derive(Debug, Clone, PartialEq, Eq)]
 pub enum Error {
     /// Year out of range
     YearOutOfRange,
@@ -129,12 +129,12 @@ fn year_info_to_year_day(year_info: u32) -> u32 {
         res += 29;
     }
     let mut year_info = year_info / 16;
-    let inc = if leap { 1 } else { 0 };
+    let inc = i32::from(leap);
     for _ in 0..(12 + inc) {
         if year_info % 2 == 1 {
             res += 1;
         }
-        year_info = year_info / 2;
+        year_info /= 2;
     }
     res
 }
@@ -214,7 +214,8 @@ impl LunarDate {
 
     /// Construct a new `LunarDate` from solar date
     pub fn from_solar_date(year: i32, month: u32, day: u32) -> Result<Self, Error> {
-        let solar_date = NaiveDate::from_ymd(year, month, day);
+        // TODO: the Error variant isn't a good choice, maybe add a new one?
+        let solar_date = NaiveDate::from_ymd_opt(year, month, day).ok_or(Error::YearOutOfRange)?;
         Self::from_naive_date(&solar_date)
     }
 
@@ -271,7 +272,7 @@ impl LunarDate {
     /// Return lunar date of solar date of today
     #[inline]
     pub fn today() -> Result<Self, Error> {
-        let date = Local::today();
+        let date = Local::now();
         Self::from_solar_date(date.year(), date.month(), date.day())
     }
 
@@ -354,6 +355,7 @@ impl Sub<Duration> for LunarDate {
     }
 }
 
+#[allow(clippy::suspicious_arithmetic_impl)]
 impl Sub<time::Duration> for LunarDate {
     type Output = LunarDate;
 
